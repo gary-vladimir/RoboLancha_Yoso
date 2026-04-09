@@ -1,0 +1,203 @@
+---
+title: "Lancha Robot V1 — Electrical Wiring Diagram"
+---
+flowchart TB
+
+    %% ──────────────────────────────────────────────
+    %% STYLES
+    %% ──────────────────────────────────────────────
+    classDef power fill:#e74c3c,color:#fff,stroke:#c0392b,stroke-width:2px
+    classDef ground fill:#555,color:#fff,stroke:#333,stroke-width:2px
+    classDef signal fill:#3498db,color:#fff,stroke:#2980b9,stroke-width:2px
+    classDef actuator fill:#e67e22,color:#fff,stroke:#d35400,stroke-width:2px
+    classDef sensor fill:#2ecc71,color:#fff,stroke:#27ae60,stroke-width:2px
+    classDef hydraulic fill:#9b59b6,color:#fff,stroke:#8e44ad,stroke-width:2px
+    classDef external fill:#1abc9c,color:#fff,stroke:#16a085,stroke-width:2px
+    classDef gland fill:#f1c40f,color:#333,stroke:#f39c12,stroke-width:3px,stroke-dasharray: 5 5
+
+    %% ══════════════════════════════════════════════
+    %% SEALED ELECTRONICS BOX
+    %% ══════════════════════════════════════════════
+    subgraph BOX["🔒 SEALED ELECTRONICS BOX (Airtight Container + Silica Gel)"]
+        direction TB
+
+        %% ── POWER SECTION ──
+        subgraph POWER_SECTION["⚡ Power Distribution"]
+            direction LR
+            BAT["🔋 12V LiFePO4 Battery\n20-30Ah / 240-360Wh"]
+            SWITCH["Main Power Switch\n(waterproof, on lid)"]
+            FUSE["25A Fuse / Breaker\n(positive line)"]
+            BUS["12V Bus\n(terminal strip)"]
+            BUCK["12V → 5V\nBuck Converter"]
+            BUZZER["Voltage Buzzer\n(low battery alarm)"]
+
+            BAT -->|"+12V"| SWITCH
+            SWITCH -->|"+12V switched"| FUSE
+            FUSE -->|"+12V protected"| BUS
+            BUS -->|"12V in"| BUCK
+            BAT -->|"voltage sense"| BUZZER
+        end
+
+        %% ── RC RECEIVER ──
+        subgraph RC_SECTION["📡 RC Control"]
+            direction TB
+            RX["RC Receiver\nFlySky FS-iA10B\n2.4GHz / 10ch"]
+            RX_CH1["CH1: Left Motor\n(left stick vert)"]
+            RX_CH2["CH2: Right Motor\n(right stick vert)"]
+            RX_CH3["CH3: Arm Lift\n(left stick horiz)"]
+            RX_CH4["CH4: Arm Rotate\n(right stick horiz)"]
+            RX_CH5["CH5: Gripper\n(SWA 2-pos switch)"]
+            RX_CH6["CH6: Cam Tilt\n(VRA knob, future)"]
+
+            RX --- RX_CH1
+            RX --- RX_CH2
+            RX --- RX_CH3
+            RX --- RX_CH4
+            RX --- RX_CH5
+            RX --- RX_CH6
+        end
+
+        %% ── MOTOR CONTROL ──
+        subgraph ESC_SECTION["🔄 Motor ESCs"]
+            direction LR
+            ESC_L["ESC Left\n30A Brushless\n(failsafe: throttle off)"]
+            ESC_R["ESC Right\n30A Brushless\n(failsafe: throttle off)"]
+        end
+
+        %% ── HYDRAULIC CONTROL ──
+        subgraph HYD_CONTROL["🛢️ Hydraulic Control (inside box)"]
+            direction TB
+            PUMP["Hydraulic Gear Pump\n12V DC / 1.5-2.0 GPM\n~100W intermittent"]
+            RESERVOIR["Hydraulic Reservoir\n1-2L capacity"]
+            V1["Solenoid Valve V1\n4-way 3-pos\n(Arm Lift/Lower)"]
+            V2["Solenoid Valve V2\n4-way 3-pos\n(Arm Rotate L/R)"]
+            V3["Solenoid Valve V3\n4-way 3-pos\n(Gripper Open/Close)"]
+
+            PUMP <-->|"pressure/return"| RESERVOIR
+            PUMP -->|"pressure line"| V1
+            PUMP -->|"pressure line"| V2
+            PUMP -->|"pressure line"| V3
+        end
+
+        %% ── VIDEO TX ──
+        VTX["FPV Video TX\n5.8GHz / 600mW-1W\n(e.g. AKK X2 Ultimate)"]
+
+        %% ── INTERNAL WIRING ──
+
+        %% Power to components (12V)
+        BUS -->|"12V"| ESC_L
+        BUS -->|"12V"| ESC_R
+        BUS -->|"12V"| PUMP
+        BUS -->|"12V"| V1
+        BUS -->|"12V"| V2
+        BUS -->|"12V"| V3
+
+        %% Power to components (5V)
+        BUCK -->|"5V"| RX
+        BUCK -->|"5V"| VTX
+
+        %% PWM signals from receiver
+        RX_CH1 -.->|"PWM"| ESC_L
+        RX_CH2 -.->|"PWM"| ESC_R
+        RX_CH3 -.->|"PWM / relay"| V1
+        RX_CH4 -.->|"PWM / relay"| V2
+        RX_CH5 -.->|"PWM / relay"| V3
+    end
+
+    %% ══════════════════════════════════════════════
+    %% CABLE GLAND BOUNDARY
+    %% ══════════════════════════════════════════════
+    subgraph GLANDS["⬡ Cable Glands (PG7/PG9, silicone sealed)"]
+        direction LR
+        G_ML["Gland: Motor L\npower cable"]
+        G_MR["Gland: Motor R\npower cable"]
+        G_CAM["Gland: Camera\npower + video"]
+        G_ANT_RC["Gland: RC Antenna\ncoax"]
+        G_ANT_VTX["Gland: VTX Antenna\ncoax"]
+        G_HYD["Glands x6:\nHydraulic hoses\n(2 per cylinder)"]
+    end
+
+    %% ══════════════════════════════════════════════
+    %% EXTERNAL COMPONENTS
+    %% ══════════════════════════════════════════════
+    subgraph EXTERNAL["🌊 External Components (exposed to environment)"]
+        direction TB
+
+        subgraph PROPULSION["Propulsion (stern, submerged)"]
+            MOTOR_L["Motor Left\n775 Brushless\n12V / ~150W"]
+            PROP_L["Propeller Left\n3D-printed PETG\n80mm, swept-back"]
+            GUARD_L["Weed Guard Left\nshroud + grid"]
+            MOTOR_R["Motor Right\n775 Brushless\n12V / ~150W"]
+            PROP_R["Propeller Right\n3D-printed PETG\n80mm, swept-back"]
+            GUARD_R["Weed Guard Right\nshroud + grid"]
+
+            MOTOR_L --- PROP_L
+            PROP_L --- GUARD_L
+            MOTOR_R --- PROP_R
+            PROP_R --- GUARD_R
+        end
+
+        subgraph ARM_ACTUATORS["Hydraulic Arm Cylinders"]
+            CYL1["Cylinder 1\nLift/Lower\n20mm bore, 150-200mm stroke"]
+            CYL2["Cylinder 2\nRotate/Swivel\n20mm bore, 100-150mm stroke"]
+            CYL3["Cylinder 3\nGripper\n20mm bore, 50-100mm stroke"]
+        end
+
+        subgraph MAST["Antenna & Camera Mast (~50cm PVC)"]
+            ANT_RC["RC Antenna\n2.4GHz\n(mounted high)"]
+            ANT_VTX["VTX Antenna\n5.8GHz Pagoda\n(mounted high)"]
+            CAM["FPV Camera\n1200TVL\n(e.g. RunCam Phoenix 2)\nfront-facing, angled down"]
+        end
+    end
+
+    %% ══════════════════════════════════════════════
+    %% CONNECTIONS THROUGH CABLE GLANDS
+    %% ══════════════════════════════════════════════
+
+    %% Motor power
+    ESC_L ==>|"motor phases"| G_ML
+    G_ML ==>|"motor phases"| MOTOR_L
+    ESC_R ==>|"motor phases"| G_MR
+    G_MR ==>|"motor phases"| MOTOR_R
+
+    %% Camera
+    VTX -->|"video signal"| G_CAM
+    BUCK -->|"5V power"| G_CAM
+    G_CAM -->|"power + video"| CAM
+
+    %% Antennas
+    RX -->|"coax"| G_ANT_RC
+    G_ANT_RC -->|"coax"| ANT_RC
+    VTX -->|"coax"| G_ANT_VTX
+    G_ANT_VTX -->|"coax"| ANT_VTX
+
+    %% Hydraulic hoses
+    V1 ==>|"2x hoses\n(extend/retract)"| G_HYD
+    V2 ==>|"2x hoses\n(extend/retract)"| G_HYD
+    V3 ==>|"2x hoses\n(extend/retract)"| G_HYD
+    G_HYD ==>|"hose pair"| CYL1
+    G_HYD ==>|"hose pair"| CYL2
+    G_HYD ==>|"hose pair"| CYL3
+
+    %% ══════════════════════════════════════════════
+    %% OPERATOR SIDE (not on robot)
+    %% ══════════════════════════════════════════════
+    subgraph OPERATOR["👤 Operator (on shore, up to 2km away)"]
+        TX["RC Transmitter\nFlySky FS-i6X\n2.4GHz / 10ch\n(tank-mix steering)"]
+        MONITOR["FPV Monitor 7in\nor EV800D Goggles\n5.8GHz receiver built-in"]
+    end
+
+    TX -.->|"2.4GHz RF\n~1.5-2km range"| ANT_RC
+    ANT_VTX -.->|"5.8GHz analog video\n~2km+ at 1W"| MONITOR
+
+    %% ── APPLY STYLES ──
+    class BAT,SWITCH,FUSE,BUS,BUCK power
+    class BUZZER sensor
+    class RX,RX_CH1,RX_CH2,RX_CH3,RX_CH4,RX_CH5,RX_CH6 signal
+    class ESC_L,ESC_R actuator
+    class MOTOR_L,MOTOR_R,PROP_L,PROP_R,GUARD_L,GUARD_R actuator
+    class PUMP,RESERVOIR,V1,V2,V3 hydraulic
+    class CYL1,CYL2,CYL3 hydraulic
+    class VTX,CAM,ANT_RC,ANT_VTX sensor
+    class G_ML,G_MR,G_CAM,G_ANT_RC,G_ANT_VTX,G_HYD gland
+    class TX,MONITOR external
