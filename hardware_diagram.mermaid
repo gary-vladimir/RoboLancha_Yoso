@@ -1,296 +1,430 @@
+%% ╔══════════════════════════════════════════════════════════════════════════╗
+%% ║  LANCHA ROBOT V1 — FULL HARDWARE ARCHITECTURE DIAGRAM                 ║
+%% ║                                                                        ║
+%% ║  This diagram shows the PHYSICAL structure of the entire robot:        ║
+%% ║  what parts exist, what they're made of, and how they connect          ║
+%% ║  physically to each other.                                             ║
+%% ║                                                                        ║
+%% ║  The robot is a twin-pontoon catamaran with:                           ║
+%% ║    - Two 200L drum pontoons for flotation                              ║
+%% ║    - A flat deck connecting them                                       ║
+%% ║    - Two propulsion motors at the stern (one per pontoon)              ║
+%% ║    - A 3-DOF hydraulic arm at the front for grabbing plants            ║
+%% ║    - A sealed electronics box at the center with all electronics       ║
+%% ║    - A cargo basket at the center-aft for storing harvested plants     ║
+%% ║    - A mast at the front for the camera and antennas                   ║
+%% ║                                                                        ║
+%% ║  ARROW LEGEND:                                                         ║
+%% ║    ───> (solid)  = physical connection (bolted, mounted, attached)     ║
+%% ║    ===> (thick)  = hydraulic fluid connection (hoses)                  ║
+%% ║    -.-> (dashed) = wireless radio link (no physical wire)              ║
+%% ║                                                                        ║
+%% ║  COLOR LEGEND (node colors):                                           ║
+%% ║    Dark gray  = hull structure (pontoons, drums)                       ║
+%% ║    Gray       = frame and deck components                              ║
+%% ║    Orange     = propulsion components (motors, propellers, pods)       ║
+%% ║    Purple     = hydraulic arm components (cylinders, boom, hoses)      ║
+%% ║    Green      = 3D-printed parts (gripper, pads, clamps)              ║
+%% ║    Red        = electronics (battery, ESCs, receiver, valves)          ║
+%% ║    Blue       = camera and antenna components                          ║
+%% ║    Yellow     = cargo container                                        ║
+%% ║    Teal       = operator equipment                                     ║
+%% ╚══════════════════════════════════════════════════════════════════════════╝
+
 ---
 title: "Lancha Robot V1 — Full Hardware Architecture"
 ---
 flowchart TB
 
     %% ──────────────────────────────────────────────
-    %% STYLES
+    %% STYLE DEFINITIONS
     %% ──────────────────────────────────────────────
     classDef hull fill:#2c3e50,color:#ecf0f1,stroke:#1a252f,stroke-width:2px
     classDef frame fill:#34495e,color:#ecf0f1,stroke:#2c3e50,stroke-width:2px
     classDef propulsion fill:#e67e22,color:#fff,stroke:#d35400,stroke-width:2px
     classDef arm fill:#9b59b6,color:#fff,stroke:#8e44ad,stroke-width:2px
-    classDef electronics fill:#e74c3c,color:#fff,stroke:#c0392b,stroke-width:2px
     classDef printed fill:#2ecc71,color:#fff,stroke:#27ae60,stroke-width:2px
-    classDef cargo fill:#f39c12,color:#fff,stroke:#e67e22,stroke-width:2px
+    classDef electronics fill:#e74c3c,color:#fff,stroke:#c0392b,stroke-width:2px
     classDef sensor fill:#3498db,color:#fff,stroke:#2980b9,stroke-width:2px
+    classDef cargo fill:#f39c12,color:#fff,stroke:#e67e22,stroke-width:2px
     classDef operator fill:#1abc9c,color:#fff,stroke:#16a085,stroke-width:2px
-    classDef water fill:#85C1E9,color:#1a5276,stroke:#2980b9,stroke-width:2px,stroke-dasharray: 5 5
 
-    %% ══════════════════════════════════════════════
-    %% TOP-LEVEL LAYOUT
-    %% ══════════════════════════════════════════════
-
-    subgraph ROBOT["Lancha Robot V1 — Catamaran Surface Vessel"]
+    %% ══════════════════════════════════════════════════════════════════
+    %% THE ROBOT
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph ROBOT["LANCHA ROBOT V1 — Catamaran Surface Vessel"]
         direction TB
 
-        %% ──────────────────────────────────────
-        %% HULL & FLOTATION
-        %% ──────────────────────────────────────
-        subgraph HULL["1. Hull & Flotation Platform"]
+        %% ──────────────────────────────────────────────────────────
+        %% 1. HULL & FLOTATION PLATFORM
+        %%
+        %% The hull is a catamaran: two pontoons (recycled 200L drums)
+        %% held apart by a rectangular frame, with a flat deck on top.
+        %% The drums float horizontally, parallel to each other,
+        %% spaced 1.0-1.2m apart (center to center).
+        %%
+        %% Total buoyancy: ~400kg (200kg per drum).
+        %% Robot weight: ~40-50kg. Payload: 30kg.
+        %% Huge safety margin — the drums sit very high in the water.
+        %%
+        %% Weed deflectors are V-shaped PVC pipes on the front of
+        %% each pontoon that push floating vegetation aside before
+        %% it can reach the propellers at the rear.
+        %% ──────────────────────────────────────────────────────────
+        subgraph HULL["1. HULL AND FLOTATION PLATFORM"]
             direction TB
 
-            subgraph PONTOONS["Twin Pontoons (horizontal, parallel, 1.0-1.2m apart c-to-c)"]
+            subgraph PONTOONS["Twin Pontoons (mounted horizontally, 1.0-1.2m apart)"]
                 direction LR
-                P_PORT["Port Pontoon\n200L HDPE Drum\n~200kg buoyancy\nsilicone-sealed bungs\nspray foam base (5cm)"]
-                P_STAR["Starboard Pontoon\n200L HDPE Drum\n~200kg buoyancy\nsilicone-sealed bungs\nspray foam base (5cm)"]
+                P_PORT["PORT Pontoon\n200L HDPE plastic drum\n~200kg buoyancy\nall bungs sealed with silicone\nbottom 5cm filled with spray foam\n(foam prevents full flooding if cracked)"]
+                P_STAR["STARBOARD Pontoon\n200L HDPE plastic drum\n~200kg buoyancy\nall bungs sealed with silicone\nbottom 5cm filled with spray foam"]
             end
 
-            subgraph FRAME_DECK["Frame & Deck"]
+            %% The frame connects the two pontoons and provides
+            %% a flat surface to mount everything on top.
+            subgraph FRAME_DECK["Frame and Deck"]
                 direction TB
-                FRAME["Rectangular Frame\n1.5m L x 1.2m W\n1in sq aluminum tube\nor 1.5in PVC pipe"]
-                DECK["Deck Surface\n12mm marine plywood\nor HDPE sheet\n(flat mounting platform)"]
-                SADDLES["Pontoon Saddle Clamps\n4-6x 3D-printed PETG\n+ U-bolts + rubber padding"]
+                FRAME["Rectangular Frame\n1.5m long x 1.2m wide\nmade from 1in square aluminum tube\nor 1.5in schedule-40 PVC pipe\n(spans across both pontoons)"]
+                DECK["Deck Surface\n12mm marine plywood or HDPE sheet\nscrewed onto the frame\n(flat platform for mounting all gear)"]
+                SADDLES["Pontoon Saddle Clamps\n4-6 pieces, 3D-printed PETG\ncurved to fit drum shape\nsecured with U-bolts + rubber padding\n(rubber prevents cracking the drums)"]
 
-                FRAME --- DECK
-                FRAME --- SADDLES
+                FRAME -->|"plywood/HDPE screwed on top"| DECK
+                FRAME -->|"clamps attach frame to drums"| SADDLES
             end
 
+            %% Weed deflectors push floating vegetation aside
+            %% so it doesn't wrap around the propellers at the stern.
             subgraph DEFLECTORS["Weed Deflectors (front of each pontoon)"]
                 direction LR
-                DEF_L["Port V-Deflector\n2x 50cm PVC pipes\n30 deg angle, pipe clamps"]
-                DEF_R["Starboard V-Deflector\n2x 50cm PVC pipes\n30 deg angle, pipe clamps"]
+                DEF_L["Port V-Deflector\n2x 50cm PVC pipes\nangled 30 degrees in V-shape\nattached with pipe clamps"]
+                DEF_R["Starboard V-Deflector\n2x 50cm PVC pipes\nangled 30 degrees in V-shape\nattached with pipe clamps"]
             end
 
-            SADDLES -->|"U-bolts mount to"| PONTOONS
-            DEF_L -->|"clamps to"| P_PORT
-            DEF_R -->|"clamps to"| P_STAR
+            %% How pontoons connect to the rest of the hull
+            SADDLES -->|"U-bolts clamp drums to frame"| P_PORT
+            SADDLES -->|"U-bolts clamp drums to frame"| P_STAR
+            DEF_L -->|"pipe clamps to front of"| P_PORT
+            DEF_R -->|"pipe clamps to front of"| P_STAR
         end
 
-        %% ──────────────────────────────────────
-        %% PROPULSION (STERN)
-        %% ──────────────────────────────────────
-        subgraph PROPULSION["2. Propulsion System (stern of each pontoon)"]
-            direction TB
+        %% ──────────────────────────────────────────────────────────
+        %% 2. PROPULSION SYSTEM
+        %%
+        %% Differential thrust steering (tank-style):
+        %%   - Both motors forward = go straight
+        %%   - Left motor only = turn right
+        %%   - Right motor only = turn left
+        %%   - One forward + one reverse = spin in place
+        %%
+        %% Each motor sits in a 3D-printed pod bolted to the stern
+        %% (back end) of each pontoon, angled 5-10 degrees downward
+        %% so the propeller is submerged 5-8cm below waterline.
+        %%
+        %% The propellers are custom 3D-printed with swept-back blades
+        %% and smooth edges to shed weeds instead of catching them.
+        %% A shroud/cage (weed guard) surrounds each propeller with
+        %% a cross-bar grid to block long weeds from reaching blades.
+        %% ──────────────────────────────────────────────────────────
+        subgraph PROPULSION["2. PROPULSION SYSTEM (stern of each pontoon, submerged)"]
+            direction LR
 
             subgraph PROP_PORT["Port Drive Unit"]
                 direction TB
-                POD_L["Motor Pod (3D-printed PETG)\nangled 5-10 deg down\nlip seal on shaft"]
-                MOT_L["775 Brushless Motor\n12V / ~150W / ~3000RPM"]
-                PROP_L["Propeller (3D-printed PETG)\n3-blade, 80mm dia\nswept-back, 100% infill"]
-                GUARD_L["Weed Guard (3D-printed PETG)\ncylindrical shroud\ncross-bar grid, 2cm spacing"]
+                POD_L["Motor Pod\n3D-printed PETG\nangled 5-10 deg downward\nrubber lip seal on shaft exit\n(keeps water out of pod)"]
+                MOT_L["775 Brushless DC Motor\n12V, ~150W, ~3000RPM\n(sits inside pod, above waterline)"]
+                PROP_L["Propeller\n3D-printed PETG, 100% infill\n3-blade, 200mm (8in) diameter\nswept-back blades, smooth edges, low pitch\n(sheds weeds instead of catching them)"]
+                GUARD_L["Weed Guard\n3D-printed PETG shroud\ncylindrical cage around propeller\ncross-bar grid with 2cm spacing\n(blocks weeds from reaching blades)"]
 
-                POD_L --- MOT_L
-                MOT_L -->|"shaft + coupler"| PROP_L
-                PROP_L --- GUARD_L
+                POD_L -->|"motor bolted inside"| MOT_L
+                MOT_L -->|"shaft + coupler spins"| PROP_L
+                PROP_L -->|"enclosed by cage"| GUARD_L
             end
 
             subgraph PROP_STAR["Starboard Drive Unit"]
                 direction TB
-                POD_R["Motor Pod (3D-printed PETG)\nangled 5-10 deg down\nlip seal on shaft"]
-                MOT_R["775 Brushless Motor\n12V / ~150W / ~3000RPM"]
-                PROP_R["Propeller (3D-printed PETG)\n3-blade, 80mm dia\nswept-back, 100% infill"]
-                GUARD_R["Weed Guard (3D-printed PETG)\ncylindrical shroud\ncross-bar grid, 2cm spacing"]
+                POD_R["Motor Pod\n3D-printed PETG\nangled 5-10 deg downward\nrubber lip seal on shaft exit"]
+                MOT_R["775 Brushless DC Motor\n12V, ~150W, ~3000RPM"]
+                PROP_R["Propeller\n3D-printed PETG, 100% infill\n3-blade, 200mm (8in) diameter\nswept-back blades, smooth edges, low pitch"]
+                GUARD_R["Weed Guard\n3D-printed PETG shroud\ncylindrical cage around propeller\ncross-bar grid with 2cm spacing"]
 
-                POD_R --- MOT_R
-                MOT_R -->|"shaft + coupler"| PROP_R
-                PROP_R --- GUARD_R
+                POD_R -->|"motor bolted inside"| MOT_R
+                MOT_R -->|"shaft + coupler spins"| PROP_R
+                PROP_R -->|"enclosed by cage"| GUARD_R
             end
         end
 
-        %% ──────────────────────────────────────
-        %% HYDRAULIC ARM (FRONT)
-        %% ──────────────────────────────────────
-        subgraph ARM["3. Hydraulic Robotic Arm — 3-DOF (front of deck, slightly off-center)"]
+        %% ──────────────────────────────────────────────────────────
+        %% 3. HYDRAULIC ROBOTIC ARM (3 Degrees of Freedom)
+        %%
+        %% Mounted at the FRONT of the deck, slightly off-center
+        %% (so it doesn't block the camera's view).
+        %%
+        %% 3 movements (each driven by one hydraulic cylinder):
+        %%   1. LIFT/LOWER — shoulder joint raises/lowers the boom
+        %%   2. ROTATE — base bearing swivels the arm left/right (~90 deg)
+        %%   3. GRIP — claw opens/closes to grab plants
+        %%
+        %% Key design: all electric/fluid components (pump, valves,
+        %% reservoir) are sealed inside the electronics box on deck.
+        %% Only passive metal/plastic arm parts and hoses are exposed.
+        %%
+        %% The gripper is 3D-printed with textured rubber pads for
+        %% gripping wet, slippery plants. It has drainage holes so
+        %% water drains as plants are lifted out of the reservoir.
+        %% ──────────────────────────────────────────────────────────
+        subgraph ARM["3. HYDRAULIC ARM — 3-DOF (front of deck, slightly off-center)"]
             direction TB
 
-            subgraph ARM_BASE["Base Assembly"]
+            %% The base is a vertical post bolted to the deck with
+            %% a rotation bearing on top. The entire arm pivots on
+            %% this bearing for left/right rotation.
+            subgraph ARM_BASE["Base Assembly (bolted to front deck)"]
                 direction TB
-                BASE_POST["Vertical Post\npipe flange bolted to deck"]
-                BEARING["Thrust / Lazy Susan Bearing\n(rotation pivot)"]
-                BASE_POST --- BEARING
+                BASE_POST["Vertical Post\nmetal pipe with flange\nflange bolted to deck surface"]
+                BEARING["Rotation Bearing\nthrust bearing or lazy susan\n(allows arm to swivel left/right)\nmounted on top of post"]
+
+                BASE_POST -->|"bearing sits on top of post"| BEARING
             end
 
-            subgraph ARM_BOOM["Boom Structure"]
-                direction LR
-                BOOM["Main Boom\n~80cm long\n1.5in sq aluminum tube\nor 1in schedule-40 steel"]
-                PIVOT["Shoulder Lift Pivot\nhinge, 15cm above base"]
-                BOOM --- PIVOT
-            end
-
-            subgraph ARM_CYLINDERS["Hydraulic Cylinders (double-acting, 20mm bore)"]
+            %% The boom is the main arm that sticks out from the base.
+            %% The shoulder pivot is a hinge where the lift cylinder
+            %% attaches to raise and lower the boom.
+            subgraph ARM_BOOM["Boom (the main arm that extends outward)"]
                 direction TB
-                CYL1["Cylinder 1: Lift/Lower\nstroke 150-200mm\nmounted at shoulder"]
-                CYL2["Cylinder 2: Rotate/Swivel\nstroke 100-150mm\nlever arm at base"]
-                CYL3["Cylinder 3: Gripper\nstroke 50-100mm\nmounted on claw"]
+                BOOM["Main Boom\n~80cm long\n1.5in square aluminum tube\nor 1in schedule-40 steel pipe\n(must handle ~5kg at full extension)"]
+                PIVOT["Shoulder Lift Pivot\nhinge point 15cm above base\n(boom pivots here to go up/down)"]
+
+                BOOM -->|"hinged at"| PIVOT
             end
 
-            subgraph GRIPPER["Gripper / Claw (3D-printed)"]
+            %% Three hydraulic cylinders provide the arm's 3 movements.
+            %% Each is a small double-acting cylinder: pressurized fluid
+            %% can push the piston in either direction (extend or retract).
+            subgraph ARM_CYLINDERS["Hydraulic Cylinders (one per movement)"]
                 direction TB
-                GRIP_FRAME["Gripper Frame\nPETG, 100% infill"]
-                FINGER_L["Finger Left\n15cm long x 5cm wide\nPETG + TPU rubber pad"]
-                FINGER_R["Finger Right\n15cm long x 5cm wide\nPETG + TPU rubber pad"]
-                LINKAGE["Parallel Linkage\ndriven by Cylinder 3\n20-25cm max opening"]
-                DRAIN["Drainage Slots\nin fingers and frame"]
-
-                GRIP_FRAME --- FINGER_L
-                GRIP_FRAME --- FINGER_R
-                GRIP_FRAME --- LINKAGE
-                GRIP_FRAME --- DRAIN
-                LINKAGE ---|"actuated by"| CYL3
+                CYL1["Cylinder 1: LIFT / LOWER\ndouble-acting, 20mm bore\n150-200mm stroke\nmounted at shoulder pivot\n(pushes boom up and down)"]
+                CYL2["Cylinder 2: ROTATE LEFT / RIGHT\ndouble-acting, 20mm bore\n100-150mm stroke\nconnected to a lever arm on base\n(pushes arm to swivel on bearing)"]
+                CYL3["Cylinder 3: GRIPPER OPEN / CLOSE\ndouble-acting, 20mm bore\n50-100mm stroke\nmounted on the claw mechanism\n(pushes linkage to open/close fingers)"]
             end
 
-            subgraph HOSE_ROUTING["Hydraulic Hose Routing"]
-                HOSES["6x Nylon Hoses (6mm / 1/4in)\n2 per cylinder (extend + retract)\nbundled with zip ties along boom\nslack loop at rotation joint\npush-fit connectors"]
+            %% The gripper is the end effector — the "hand" that
+            %% grabs the plants. Two parallel fingers open and close
+            %% like salad tongs, driven by cylinder 3 via a linkage.
+            subgraph GRIPPER["Gripper / Claw (end of arm, 3D-printed)"]
+                direction TB
+                GRIP_FRAME["Gripper Frame\nPETG plastic, 100% infill\n(structural backbone of the claw)"]
+                FINGER_L["Left Finger\n15cm long x 5cm wide\nPETG with TPU rubber pad glued on\n(rubber gives grip on wet plants)"]
+                FINGER_R["Right Finger\n15cm long x 5cm wide\nPETG with TPU rubber pad glued on"]
+                LINKAGE["Parallel Linkage Mechanism\nconnects to Cylinder 3\n20-25cm maximum opening\n(wide enough for a lechuguilla rosette)"]
+                DRAIN["Drainage Slots\nholes in fingers and frame\n(water drains as plants are lifted)"]
+
+                GRIP_FRAME -->|"left finger attached"| FINGER_L
+                GRIP_FRAME -->|"right finger attached"| FINGER_R
+                GRIP_FRAME -->|"linkage mechanism mounted"| LINKAGE
+                GRIP_FRAME -->|"drainage machined into"| DRAIN
+                CYL3 -->|"piston pushes linkage to open/close"| LINKAGE
             end
 
-            BEARING -->|"supports rotation of"| ARM_BOOM
-            PIVOT -->|"hinge for"| CYL1
-            CYL2 -->|"lever pushes"| BEARING
-            BOOM -->|"end effector"| GRIPPER
-            HOSES -->|"connects valves to"| ARM_CYLINDERS
+            %% Hydraulic hose routing along the arm.
+            %% 6 hoses total (2 per cylinder) run from the sealed
+            %% electronics box, along the boom, to each cylinder.
+            subgraph HOSE_ROUTING["Hydraulic Hose Routing (along the arm)"]
+                HOSES["6 nylon hoses, 6mm diameter\n2 per cylinder (extend + retract)\nbundled with zip ties along boom\nextra slack coiled at rotation joint\n(so hoses don't kink when arm swivels)\npush-fit connectors at both ends"]
+            end
+
+            %% How the arm subcomponents connect to each other
+            BEARING -->|"arm boom rotates on bearing"| BOOM
+            CYL1 -->|"pushes boom up/down at pivot"| PIVOT
+            CYL2 -->|"pushes lever to swivel arm on bearing"| BEARING
+            BOOM -->|"gripper attached at end of boom"| GRIP_FRAME
+            HOSES -->|"hoses run along boom to each cylinder"| CYL1
+            HOSES -->|"hoses run along boom to each cylinder"| CYL2
+            HOSES -->|"hoses run along boom to each cylinder"| CYL3
         end
 
-        %% ──────────────────────────────────────
-        %% ELECTRONICS BOX (CENTER OF DECK)
-        %% ──────────────────────────────────────
-        subgraph EBOX["4. Sealed Electronics Box (center deck)"]
+        %% ──────────────────────────────────────────────────────────
+        %% 4. SEALED ELECTRONICS BOX
+        %%
+        %% An airtight container sitting on the center of the deck.
+        %% Contains ALL electronics and the hydraulic pump/valves.
+        %% Wires and hoses exit through waterproof cable glands.
+        %% See the Wiring Diagram for full electrical detail.
+        %% ──────────────────────────────────────────────────────────
+        subgraph EBOX["4. SEALED ELECTRONICS BOX (center of deck)"]
             direction TB
-            BOX_DESC["Airtight Container (~10L)\nsnap-lock rubber gasket lid\nor surplus ammo can\nsilica gel packets inside"]
 
             subgraph EBOX_POWER["Power System"]
-                BATTERY["12V LiFePO4 Battery\n20-30Ah / 240-360Wh"]
-                FUSE_B["25A Fuse/Breaker"]
+                BATTERY["12V LiFePO4 Battery\n20-30Ah, 240-360Wh"]
+                FUSE_B["25A Fuse"]
                 BUS_B["12V Terminal Strip"]
                 BUCK_B["12V-to-5V Buck Converter"]
-                BATTERY --- FUSE_B --- BUS_B --- BUCK_B
+
+                BATTERY -->|"fused 12V"| FUSE_B
+                FUSE_B -->|"to distribution"| BUS_B
+                BUS_B -->|"stepped down"| BUCK_B
             end
 
             subgraph EBOX_CONTROL["Control Electronics"]
-                RC_RX["RC Receiver\nFlySky FS-iA10B\n2.4GHz / 10ch"]
-                ESC_LB["ESC Left (30A)"]
-                ESC_RB["ESC Right (30A)"]
+                RC_RX["RC Receiver\nFlySky FS-iA10B\n2.4GHz, 10 channels"]
+                ESC_LB["ESC Left (30A brushless)"]
+                ESC_RB["ESC Right (30A brushless)"]
             end
 
             subgraph EBOX_HYDRAULIC["Hydraulic Power Unit"]
                 H_PUMP["12V DC Gear Pump\n1.5-2.0 GPM"]
-                H_TANK["Reservoir (1-2L)\nbiodegradable fluid"]
-                H_V1["Solenoid Valve V1\n4-way 3-pos (Lift)"]
-                H_V2["Solenoid Valve V2\n4-way 3-pos (Rotate)"]
-                H_V3["Solenoid Valve V3\n4-way 3-pos (Gripper)"]
-                H_PUMP <--> H_TANK
+                H_TANK["Fluid Reservoir 1-2L\nbiodegradable hydraulic fluid"]
+                H_V1["Solenoid Valve V1 (Lift)"]
+                H_V2["Solenoid Valve V2 (Rotate)"]
+                H_V3["Solenoid Valve V3 (Gripper)"]
+
+                H_PUMP -->|"draws fluid from"| H_TANK
+                H_TANK -->|"returns fluid to"| H_PUMP
             end
 
             subgraph EBOX_VIDEO["Video Transmitter"]
-                VTX_B["5.8GHz VTX\n600mW-1W\n(e.g. AKK X2 Ultimate)"]
+                VTX_B["5.8GHz Video TX\n600mW-1W output power"]
             end
 
-            subgraph GLANDS["Cable Glands (PG7/PG9/PG13.5, silicone sealed)"]
+            %% Cable glands where wires/hoses exit the box wall
+            subgraph GLANDS["Cable Glands (waterproof seals in box wall)"]
                 direction LR
-                G_MOTOR["2x Motor Power"]
-                G_HOSE["6x Hydraulic Hoses"]
-                G_CAM["1x Camera Power/Video"]
-                G_ANT["2x Antenna Coax"]
-                G_SW["1x Main Switch"]
+                G_MOTOR["2x glands for motor power cables"]
+                G_HOSE["6x glands for hydraulic hoses"]
+                G_CAM["1x gland for camera cable"]
+                G_ANT["2x glands for antenna cables"]
+                G_SW["1x gland for power switch wiring"]
             end
         end
 
-        %% ──────────────────────────────────────
-        %% MAST & SENSORS (TOP)
-        %% ──────────────────────────────────────
-        subgraph MAST["5. Antenna & Camera Mast (~50cm PVC, front deck)"]
+        %% ──────────────────────────────────────────────────────────
+        %% 5. ANTENNA AND CAMERA MAST
+        %%
+        %% A short vertical PVC pipe (~50cm) mounted at the front
+        %% of the deck. Holds the camera and both antennas as high
+        %% as possible for best range. A 3D-printed bracket allows
+        %% adjusting the camera angle.
+        %% ──────────────────────────────────────────────────────────
+        subgraph MAST["5. ANTENNA AND CAMERA MAST (front deck, ~50cm tall PVC pipe)"]
             direction LR
-            MAST_POST["Vertical PVC Mast\nmounted on deck"]
-            CAM_B["FPV Camera\n1200TVL mini\n(e.g. RunCam Phoenix 2)\nfront-facing, angled down"]
-            ANT_RC_B["RC Antenna\n2.4GHz quarter-wave\n(mounted at top)"]
-            ANT_VTX_B["VTX Antenna\n5.8GHz Pagoda/Cloverleaf\n(mounted at top)"]
-            BRACKET["3D-printed Mount Bracket\nadjustable angle"]
+            MAST_POST["Vertical PVC Mast\nmounted to deck\n~50cm tall"]
+            CAM_B["FPV Camera\n1200TVL mini\nfront-facing, angled down\n(sees water surface + arm)"]
+            ANT_RC_B["RC Antenna\n2.4GHz quarter-wave\n(picks up operator commands)"]
+            ANT_VTX_B["VTX Antenna\n5.8GHz Pagoda style\n(broadcasts live video)"]
+            BRACKET["Camera/Antenna Bracket\n3D-printed PETG\nadjustable angle\nclamps to mast top"]
 
-            MAST_POST --- BRACKET
-            BRACKET --- CAM_B
-            BRACKET --- ANT_RC_B
-            BRACKET --- ANT_VTX_B
+            MAST_POST -->|"bracket clamps to top"| BRACKET
+            BRACKET -->|"camera mounted on"| CAM_B
+            BRACKET -->|"RC antenna mounted on"| ANT_RC_B
+            BRACKET -->|"VTX antenna mounted on"| ANT_VTX_B
         end
 
-        %% ──────────────────────────────────────
-        %% CARGO (CENTER-AFT)
-        %% ──────────────────────────────────────
-        subgraph CARGO["6. Cargo Container (center-aft deck)"]
-            BASKET["Plastic Crate / Laundry Basket\n~60L-80L capacity\n60cm x 40cm x 35cm\ndrainage holes\nbolted/zip-tied to deck\nholds ~50 plants / 30kg max"]
+        %% ──────────────────────────────────────────────────────────
+        %% 6. CARGO CONTAINER
+        %%
+        %% A large plastic crate or laundry basket bolted/zip-tied
+        %% to the deck. Positioned center-aft to counterbalance
+        %% the arm at the front. Has drainage holes so water drains
+        %% as wet plants are loaded in. Holds up to 50 plants (~30kg).
+        %% ──────────────────────────────────────────────────────────
+        subgraph CARGO["6. CARGO CONTAINER (center-aft of deck)"]
+            BASKET["Plastic Crate or Laundry Basket\n60-80L capacity\n60cm x 40cm x 35cm tall\ndrainage holes in bottom\nbolted or zip-tied to deck\nholds ~50 plants, max 30kg"]
         end
     end
 
-    %% ══════════════════════════════════════════════
-    %% OPERATING ENVIRONMENT
-    %% ══════════════════════════════════════════════
-    subgraph ENV["Operating Environment"]
-        direction LR
-        WATER["Swampy Reservoir\nheavy surface vegetation\nlechuguilla plants"]
-    end
+    %% ══════════════════════════════════════════════════════════════════
+    %% PHYSICAL MOUNTING CONNECTIONS
+    %%
+    %% These show what is physically attached to what.
+    %% The hull supports everything. The propulsion pods bolt to
+    %% the pontoon sterns. The arm bolts to the front deck.
+    %% The electronics box, mast, and cargo sit on the deck.
+    %% ══════════════════════════════════════════════════════════════════
 
-    %% ══════════════════════════════════════════════
-    %% OPERATOR
-    %% ══════════════════════════════════════════════
-    subgraph OPERATOR["Operator Station (shore, up to 2km)"]
+    %% Propulsion pods bolt to the back end of each pontoon
+    POD_L -->|"bolted to stern of port pontoon"| P_PORT
+    POD_R -->|"bolted to stern of starboard pontoon"| P_STAR
+
+    %% Arm base is bolted to the front of the deck
+    BASE_POST -->|"flange bolted to front deck"| DECK
+
+    %% Electronics box sits on center deck
+    EBOX -->|"mounted on center of deck"| DECK
+
+    %% Mast is mounted on front deck
+    MAST_POST -->|"mounted to front deck"| DECK
+
+    %% Cargo basket is attached to center-aft deck
+    BASKET -->|"bolted/zip-tied to aft deck"| DECK
+
+    %% ══════════════════════════════════════════════════════════════════
+    %% ELECTRICAL CONNECTIONS (box to external components)
+    %%
+    %% All electrical cables pass through waterproof cable glands
+    %% in the electronics box wall. See Wiring Diagram for full detail.
+    %% ══════════════════════════════════════════════════════════════════
+
+    %% ESCs inside box send power to motors at stern
+    ESC_LB -->|"power cable through gland to motor"| MOT_L
+    ESC_RB -->|"power cable through gland to motor"| MOT_R
+
+    %% Video transmitter connects to mast-mounted antenna and camera
+    VTX_B -->|"antenna cable through gland"| ANT_VTX_B
+    VTX_B -->|"video cable through gland to camera"| CAM_B
+
+    %% RC receiver connects to mast-mounted antenna
+    RC_RX -->|"antenna cable through gland"| ANT_RC_B
+
+    %% ══════════════════════════════════════════════════════════════════
+    %% HYDRAULIC CONNECTIONS (box to arm cylinders)
+    %%
+    %% Pressurized hydraulic fluid flows from the pump through
+    %% solenoid valves, out through cable glands, through nylon hoses
+    %% bundled along the arm boom, to each hydraulic cylinder.
+    %% ══════════════════════════════════════════════════════════════════
+
+    %% Each valve sends 2 hoses to its cylinder
+    H_V1 ==>|"2 hoses through glands to arm"| CYL1
+    H_V2 ==>|"2 hoses through glands to arm"| CYL2
+    H_V3 ==>|"2 hoses through glands to arm"| CYL3
+
+    %% ══════════════════════════════════════════════════════════════════
+    %% OPERATOR STATION
+    %%
+    %% The human operator stands on shore, up to 2km away.
+    %% They send commands via RC transmitter and watch live video
+    %% from the robot on a monitor or goggles.
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph OPERATOR["OPERATOR STATION (human on shore, up to 2km away)"]
         direction TB
-        TX_OP["RC Transmitter\nFlySky FS-i6X\n2.4GHz / 10ch"]
-        MON_OP["FPV Monitor 7in\nor EV800D Goggles\nbuilt-in 5.8GHz RX"]
+        TX_OP["RC Transmitter\nFlySky FS-i6X\n2.4GHz, 10 channels"]
+        MON_OP["FPV Monitor (7 inch)\nor FPV Goggles (EV800D)\nbuilt-in 5.8GHz receiver"]
 
-        subgraph CONTROLS["Control Mapping"]
+        subgraph CONTROLS["Stick/Switch Mapping"]
             direction TB
-            C1["Left Stick Vert → Left Motor"]
-            C2["Right Stick Vert → Right Motor"]
-            C3["Left Stick Horiz → Arm Lift"]
-            C4["Right Stick Horiz → Arm Rotate"]
-            C5["SWA Switch → Gripper"]
-            C6["VRA Knob → Camera Tilt (future)"]
+            C1["Left Stick Up/Down --> Left Motor speed"]
+            C2["Right Stick Up/Down --> Right Motor speed"]
+            C3["Left Stick Left/Right --> Arm Lift/Lower"]
+            C4["Right Stick Left/Right --> Arm Rotate"]
+            C5["SWA Toggle Switch --> Gripper Open/Close"]
         end
     end
 
-    %% ══════════════════════════════════════════════
-    %% CROSS-SUBSYSTEM CONNECTIONS
-    %% ══════════════════════════════════════════════
+    %% Wireless: operator commands to robot
+    TX_OP -.->|"2.4GHz radio commands\n1.5-2km range"| ANT_RC_B
 
-    %% Physical mounting
-    HULL -->|"supports"| PROPULSION
-    HULL -->|"supports"| ARM
-    HULL -->|"supports"| EBOX
-    HULL -->|"supports"| MAST
-    HULL -->|"supports"| CARGO
+    %% Wireless: robot video to operator
+    ANT_VTX_B -.->|"5.8GHz live video\n2km+ range at 1W"| MON_OP
 
-    %% Propulsion at stern
-    POD_L -->|"bolts to stern of"| P_PORT
-    POD_R -->|"bolts to stern of"| P_STAR
-
-    %% Electronics to propulsion
-    ESC_LB -->|"power cable\nthrough gland"| MOT_L
-    ESC_RB -->|"power cable\nthrough gland"| MOT_R
-
-    %% Electronics to arm
-    H_V1 -->|"2x hoses\nthrough glands"| CYL1
-    H_V2 -->|"2x hoses\nthrough glands"| CYL2
-    H_V3 -->|"2x hoses\nthrough glands"| CYL3
-
-    %% Electronics to mast
-    VTX_B -->|"coax through gland"| ANT_VTX_B
-    RC_RX -->|"coax through gland"| ANT_RC_B
-    VTX_B -->|"video feed"| CAM_B
-
-    %% RC signals
-    RC_RX -.->|"PWM CH1-CH2"| ESC_LB
-    RC_RX -.->|"PWM CH1-CH2"| ESC_RB
-    RC_RX -.->|"PWM CH3-CH5"| H_V1
-    RC_RX -.->|"PWM CH3-CH5"| H_V2
-    RC_RX -.->|"PWM CH3-CH5"| H_V3
-
-    %% Robot in environment
-    ROBOT -->|"operates in"| ENV
-
-    %% Operator links
-    TX_OP -.->|"2.4GHz RC\n~1.5-2km"| ANT_RC_B
-    ANT_VTX_B -.->|"5.8GHz video\n~2km+"| MON_OP
-
-    %% ── APPLY STYLES ──
+    %% ══════════════════════════════════════════════════════════════════
+    %% APPLY COLOR STYLES TO ALL NODES
+    %% ══════════════════════════════════════════════════════════════════
     class P_PORT,P_STAR hull
     class FRAME,DECK,SADDLES,DEF_L,DEF_R frame
     class POD_L,MOT_L,PROP_L,GUARD_L,POD_R,MOT_R,PROP_R,GUARD_R propulsion
     class BASE_POST,BEARING,BOOM,PIVOT,CYL1,CYL2,CYL3,HOSES arm
-    class GRIP_FRAME,FINGER_L,FINGER_R,LINKAGE,DRAIN printed
-    class BATTERY,FUSE_B,BUS_B,BUCK_B,BOX_DESC electronics
-    class RC_RX,ESC_LB,ESC_RB electronics
+    class GRIP_FRAME,FINGER_L,FINGER_R,LINKAGE,DRAIN,BRACKET printed
+    class BATTERY,FUSE_B,BUS_B,BUCK_B,RC_RX,ESC_LB,ESC_RB electronics
     class H_PUMP,H_TANK,H_V1,H_V2,H_V3 arm
-    class VTX_B,CAM_B,ANT_RC_B,ANT_VTX_B sensor
-    class MAST_POST,BRACKET sensor
+    class VTX_B,CAM_B,ANT_RC_B,ANT_VTX_B,MAST_POST sensor
     class BASKET cargo
-    class TX_OP,MON_OP,C1,C2,C3,C4,C5,C6 operator
-    class WATER water
+    class TX_OP,MON_OP,C1,C2,C3,C4,C5 operator

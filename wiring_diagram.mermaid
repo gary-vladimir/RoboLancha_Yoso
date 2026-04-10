@@ -1,203 +1,380 @@
+%% ╔══════════════════════════════════════════════════════════════════════════╗
+%% ║  LANCHA ROBOT V1 — ELECTRICAL WIRING DIAGRAM                          ║
+%% ║                                                                        ║
+%% ║  This diagram shows how every electrical component is wired together.  ║
+%% ║  It is organized into 4 zones:                                         ║
+%% ║                                                                        ║
+%% ║    1. SEALED ELECTRONICS BOX — everything inside the waterproof box    ║
+%% ║    2. CABLE GLANDS — the waterproof pass-throughs in the box wall      ║
+%% ║    3. EXTERNAL COMPONENTS — parts outside the box, on or under robot   ║
+%% ║    4. OPERATOR STATION — what the human holds on shore                 ║
+%% ║                                                                        ║
+%% ║  ARROW LEGEND:                                                         ║
+%% ║    ───> (solid thin)   = electrical power wire                         ║
+%% ║    ===> (solid thick)  = high-current power wire OR hydraulic hose     ║
+%% ║    -.-> (dashed)       = wireless radio signal (no physical wire)      ║
+%% ║                                                                        ║
+%% ║  COLOR LEGEND (node colors):                                           ║
+%% ║    Red     = power components (battery, fuse, bus, converter)          ║
+%% ║    Blue    = signal/control components (RC receiver, channels)         ║
+%% ║    Orange  = motors and motor controllers (ESCs, propulsion motors)    ║
+%% ║    Purple  = hydraulic components (pump, valves, cylinders)            ║
+%% ║    Green   = camera and antenna components                             ║
+%% ║    Yellow  = cable glands (waterproof seals where wires exit the box)  ║
+%% ║    Teal    = operator equipment (transmitter, monitor)                 ║
+%% ╚══════════════════════════════════════════════════════════════════════════╝
+
 ---
 title: "Lancha Robot V1 — Electrical Wiring Diagram"
 ---
 flowchart TB
 
     %% ──────────────────────────────────────────────
-    %% STYLES
+    %% STYLE DEFINITIONS
+    %%
+    %% Each style corresponds to a functional category.
+    %% Components are colored by what they DO, not where they are.
     %% ──────────────────────────────────────────────
     classDef power fill:#e74c3c,color:#fff,stroke:#c0392b,stroke-width:2px
-    classDef ground fill:#555,color:#fff,stroke:#333,stroke-width:2px
     classDef signal fill:#3498db,color:#fff,stroke:#2980b9,stroke-width:2px
     classDef actuator fill:#e67e22,color:#fff,stroke:#d35400,stroke-width:2px
-    classDef sensor fill:#2ecc71,color:#fff,stroke:#27ae60,stroke-width:2px
     classDef hydraulic fill:#9b59b6,color:#fff,stroke:#8e44ad,stroke-width:2px
-    classDef external fill:#1abc9c,color:#fff,stroke:#16a085,stroke-width:2px
+    classDef sensor fill:#2ecc71,color:#fff,stroke:#27ae60,stroke-width:2px
     classDef gland fill:#f1c40f,color:#333,stroke:#f39c12,stroke-width:3px,stroke-dasharray: 5 5
+    classDef external fill:#1abc9c,color:#fff,stroke:#16a085,stroke-width:2px
 
-    %% ══════════════════════════════════════════════
-    %% SEALED ELECTRONICS BOX
-    %% ══════════════════════════════════════════════
-    subgraph BOX["🔒 SEALED ELECTRONICS BOX (Airtight Container + Silica Gel)"]
+    %% ══════════════════════════════════════════════════════════════════
+    %% ZONE 1: SEALED ELECTRONICS BOX
+    %%
+    %% This is an airtight container (food container or ammo can) that
+    %% sits on the deck. EVERY electronic component lives inside it.
+    %% Silica gel packets absorb moisture. Nothing electronic is exposed
+    %% to the water — only passive hoses and power cables exit the box
+    %% through waterproof cable glands.
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph BOX["SEALED ELECTRONICS BOX (airtight container on deck)"]
         direction TB
 
-        %% ── POWER SECTION ──
-        subgraph POWER_SECTION["⚡ Power Distribution"]
+        %% ── POWER DISTRIBUTION ──
+        %%
+        %% Power flows in a single chain:
+        %%   Battery --> Main Switch --> 25A Fuse --> 12V Bus --> everything
+        %%
+        %% The 12V Bus is a terminal strip where all 12V devices connect.
+        %% A buck converter steps 12V down to 5V for the RC receiver
+        %% and the video transmitter (they need 5V to operate).
+        %% A voltage buzzer connects directly to the battery and beeps
+        %% loud when voltage drops too low, warning the operator to
+        %% bring the robot back to shore before the battery dies.
+        %% ──────────────────────────────────────────────
+        subgraph POWER_SECTION["Power Distribution"]
             direction LR
-            BAT["🔋 12V LiFePO4 Battery\n20-30Ah / 240-360Wh"]
-            SWITCH["Main Power Switch\n(waterproof, on lid)"]
-            FUSE["25A Fuse / Breaker\n(positive line)"]
-            BUS["12V Bus\n(terminal strip)"]
-            BUCK["12V → 5V\nBuck Converter"]
-            BUZZER["Voltage Buzzer\n(low battery alarm)"]
+            BAT["12V LiFePO4 Battery\n20-30Ah capacity\n240-360Wh total energy"]
+            SWITCH["Main Power Switch\n(waterproof toggle\nmounted on box lid)"]
+            FUSE["25A Fuse\n(protects all wiring\nfrom short circuits)"]
+            BUS["12V Bus\n(terminal strip where\nall 12V devices connect)"]
+            BUCK["12V to 5V\nBuck Converter\n(steps voltage down\nfor low-voltage devices)"]
+            BUZZER["Voltage Buzzer\n(beeps when battery\nvoltage is too low)"]
 
-            BAT -->|"+12V"| SWITCH
-            SWITCH -->|"+12V switched"| FUSE
-            FUSE -->|"+12V protected"| BUS
-            BUS -->|"12V in"| BUCK
-            BAT -->|"voltage sense"| BUZZER
+            %% Power flows left to right through the protection chain
+            BAT -->|"positive wire"| SWITCH
+            SWITCH -->|"switched 12V"| FUSE
+            FUSE -->|"protected 12V"| BUS
+            BUS -->|"12V input"| BUCK
+
+            %% Buzzer taps directly off the battery to monitor voltage
+            BAT -->|"voltage monitor wire"| BUZZER
         end
 
-        %% ── RC RECEIVER ──
-        subgraph RC_SECTION["📡 RC Control"]
+        %% ── RC RECEIVER AND CHANNEL OUTPUTS ──
+        %%
+        %% The RC receiver picks up radio commands from the operator's
+        %% transmitter and outputs a separate PWM signal wire for each
+        %% channel. Each channel controls one function on the robot.
+        %% PWM = Pulse Width Modulation, a simple signal that tells
+        %% a motor controller or valve how much to move.
+        %%
+        %% 5 channels are used:
+        %%   CH1 = left propulsion motor speed and direction
+        %%   CH2 = right propulsion motor speed and direction
+        %%   CH3 = hydraulic arm lift up / lower down
+        %%   CH4 = hydraulic arm rotate left / right
+        %%   CH5 = gripper claw open / close
+        %% ──────────────────────────────────────────────
+        subgraph RC_SECTION["RC Receiver (radio control brain)"]
             direction TB
-            RX["RC Receiver\nFlySky FS-iA10B\n2.4GHz / 10ch"]
-            RX_CH1["CH1: Left Motor\n(left stick vert)"]
-            RX_CH2["CH2: Right Motor\n(right stick vert)"]
-            RX_CH3["CH3: Arm Lift\n(left stick horiz)"]
-            RX_CH4["CH4: Arm Rotate\n(right stick horiz)"]
-            RX_CH5["CH5: Gripper\n(SWA 2-pos switch)"]
-            RX_CH6["CH6: Cam Tilt\n(VRA knob, future)"]
+            RX["RC Receiver\nFlySky FS-iA10B\n2.4GHz, 10 channels"]
+            RX_CH1["CH1 output: Left Motor\n(operator left stick up/down)"]
+            RX_CH2["CH2 output: Right Motor\n(operator right stick up/down)"]
+            RX_CH3["CH3 output: Arm Lift\n(operator left stick left/right)"]
+            RX_CH4["CH4 output: Arm Rotate\n(operator right stick left/right)"]
+            RX_CH5["CH5 output: Gripper\n(operator SWA toggle switch)"]
 
-            RX --- RX_CH1
-            RX --- RX_CH2
-            RX --- RX_CH3
-            RX --- RX_CH4
-            RX --- RX_CH5
-            RX --- RX_CH6
+            %% Each channel is a separate PWM signal output wire
+            RX -->|"PWM signal wire"| RX_CH1
+            RX -->|"PWM signal wire"| RX_CH2
+            RX -->|"PWM signal wire"| RX_CH3
+            RX -->|"PWM signal wire"| RX_CH4
+            RX -->|"PWM signal wire"| RX_CH5
         end
 
-        %% ── MOTOR CONTROL ──
-        subgraph ESC_SECTION["🔄 Motor ESCs"]
+        %% ── MOTOR SPEED CONTROLLERS (ESCs) ──
+        %%
+        %% ESC = Electronic Speed Controller. Each ESC takes a small
+        %% PWM signal from the RC receiver and converts it into
+        %% high-current power output to spin a propulsion motor.
+        %% The ESC controls speed and direction (forward/reverse).
+        %% If RC signal is lost, failsafe cuts throttle to zero
+        %% so the robot just drifts and can be retrieved.
+        %% ──────────────────────────────────────────────
+        subgraph ESC_SECTION["Motor Speed Controllers"]
             direction LR
-            ESC_L["ESC Left\n30A Brushless\n(failsafe: throttle off)"]
-            ESC_R["ESC Right\n30A Brushless\n(failsafe: throttle off)"]
+            ESC_L["ESC Left\n30A brushless\nfailsafe: throttle off"]
+            ESC_R["ESC Right\n30A brushless\nfailsafe: throttle off"]
         end
 
-        %% ── HYDRAULIC CONTROL ──
-        subgraph HYD_CONTROL["🛢️ Hydraulic Control (inside box)"]
+        %% ── HYDRAULIC CONTROL COMPONENTS ──
+        %%
+        %% All hydraulic components live INSIDE the sealed box.
+        %% The pump pressurizes hydraulic fluid from the reservoir.
+        %% Three solenoid valves direct that pressurized fluid to the
+        %% three cylinders on the arm. Each valve is "4-way 3-position":
+        %%   - Position 1: fluid flows to EXTEND the cylinder
+        %%   - Position 2: fluid is BLOCKED (cylinder holds position)
+        %%   - Position 3: fluid flows to RETRACT the cylinder
+        %% The valves are spring-centered (default = hold position).
+        %% They are activated electrically by the RC receiver signals.
+        %% ──────────────────────────────────────────────
+        subgraph HYD_CONTROL["Hydraulic Control (pump + valves, inside box)"]
             direction TB
-            PUMP["Hydraulic Gear Pump\n12V DC / 1.5-2.0 GPM\n~100W intermittent"]
-            RESERVOIR["Hydraulic Reservoir\n1-2L capacity"]
-            V1["Solenoid Valve V1\n4-way 3-pos\n(Arm Lift/Lower)"]
-            V2["Solenoid Valve V2\n4-way 3-pos\n(Arm Rotate L/R)"]
-            V3["Solenoid Valve V3\n4-way 3-pos\n(Gripper Open/Close)"]
+            PUMP["Hydraulic Gear Pump\n12V DC, 1.5-2.0 GPM\n~100W when running\n(runs only during arm use)"]
+            RESERVOIR["Hydraulic Fluid Reservoir\n1-2L biodegradable fluid\n(pump draws from and\nreturns fluid here)"]
+            V1["Solenoid Valve V1\ncontrols: Arm Lift/Lower\n4-way, 3-position"]
+            V2["Solenoid Valve V2\ncontrols: Arm Rotate L/R\n4-way, 3-position"]
+            V3["Solenoid Valve V3\ncontrols: Gripper Open/Close\n4-way, 3-position"]
 
-            PUMP <-->|"pressure/return"| RESERVOIR
-            PUMP -->|"pressure line"| V1
-            PUMP -->|"pressure line"| V2
-            PUMP -->|"pressure line"| V3
+            %% Fluid circulates between pump and reservoir
+            PUMP -->|"draws fluid from"| RESERVOIR
+            RESERVOIR -->|"returns fluid to"| PUMP
+
+            %% Pump sends pressurized fluid to each valve
+            PUMP -->|"pressurized fluid"| V1
+            PUMP -->|"pressurized fluid"| V2
+            PUMP -->|"pressurized fluid"| V3
         end
 
-        %% ── VIDEO TX ──
-        VTX["FPV Video TX\n5.8GHz / 600mW-1W\n(e.g. AKK X2 Ultimate)"]
+        %% ── VIDEO TRANSMITTER ──
+        %%
+        %% The VTX takes the video signal from the FPV camera
+        %% and broadcasts it wirelessly at 5.8GHz so the operator
+        %% can see a live feed on their monitor/goggles.
+        %% It sits inside the box for protection. Its antenna wire
+        %% exits through a cable gland to an external antenna on
+        %% the mast for better range.
+        %% ──────────────────────────────────────────────
+        VTX["FPV Video Transmitter\n5.8GHz, 600mW-1W power\nbroadcasts live video\nto operator's monitor"]
 
-        %% ── INTERNAL WIRING ──
+        %% ── 12V POWER DELIVERY ──
+        %% These are the power wires from the 12V bus to each
+        %% component that needs 12V to operate.
+        %% ──────────────────────────────────────────────
+        BUS -->|"12V power"| ESC_L
+        BUS -->|"12V power"| ESC_R
+        BUS -->|"12V power"| PUMP
+        BUS -->|"12V power"| V1
+        BUS -->|"12V power"| V2
+        BUS -->|"12V power"| V3
 
-        %% Power to components (12V)
-        BUS -->|"12V"| ESC_L
-        BUS -->|"12V"| ESC_R
-        BUS -->|"12V"| PUMP
-        BUS -->|"12V"| V1
-        BUS -->|"12V"| V2
-        BUS -->|"12V"| V3
+        %% ── 5V POWER DELIVERY ──
+        %% The buck converter outputs 5V for components that
+        %% cannot handle 12V directly.
+        %% ──────────────────────────────────────────────
+        BUCK -->|"5V power"| RX
+        BUCK -->|"5V power"| VTX
 
-        %% Power to components (5V)
-        BUCK -->|"5V"| RX
-        BUCK -->|"5V"| VTX
+        %% ── PWM CONTROL SIGNALS ──
+        %% These are thin signal wires (not power). Each carries
+        %% a PWM signal that tells the target device what to do.
+        %% Dashed arrows = low-current signal wires.
+        %% ──────────────────────────────────────────────
 
-        %% PWM signals from receiver
-        RX_CH1 -.->|"PWM"| ESC_L
-        RX_CH2 -.->|"PWM"| ESC_R
-        RX_CH3 -.->|"PWM / relay"| V1
-        RX_CH4 -.->|"PWM / relay"| V2
-        RX_CH5 -.->|"PWM / relay"| V3
+        %% CH1 signal tells ESC Left how fast and which direction
+        RX_CH1 -.->|"PWM signal: speed + direction"| ESC_L
+
+        %% CH2 signal tells ESC Right how fast and which direction
+        RX_CH2 -.->|"PWM signal: speed + direction"| ESC_R
+
+        %% CH3 signal activates solenoid valve V1 to extend or retract
+        %% the lift cylinder. May go through a relay board if the valve
+        %% draws more current than the receiver can output directly.
+        RX_CH3 -.->|"PWM signal via relay"| V1
+
+        %% CH4 signal activates solenoid valve V2 for arm rotation
+        RX_CH4 -.->|"PWM signal via relay"| V2
+
+        %% CH5 signal activates solenoid valve V3 for gripper
+        RX_CH5 -.->|"PWM signal via relay"| V3
     end
 
-    %% ══════════════════════════════════════════════
-    %% CABLE GLAND BOUNDARY
-    %% ══════════════════════════════════════════════
-    subgraph GLANDS["⬡ Cable Glands (PG7/PG9, silicone sealed)"]
+    %% ══════════════════════════════════════════════════════════════════
+    %% ZONE 2: CABLE GLANDS
+    %%
+    %% Cable glands are waterproof fittings screwed into holes drilled
+    %% in the electronics box wall. They have a rubber gasket that
+    %% compresses around the cable/hose passing through, creating a
+    %% watertight seal. Every wire and hose that exits the box passes
+    %% through one of these. Silicone sealant is applied around each
+    %% gland as extra insurance against water.
+    %%
+    %% PG7/PG9 = standard gland sizes (PG7 for thin cables,
+    %% PG9 for thicker ones, PG13.5 for bundled hoses).
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph GLANDS["CABLE GLANDS (waterproof seals in box wall, silicone-sealed)"]
         direction LR
-        G_ML["Gland: Motor L\npower cable"]
-        G_MR["Gland: Motor R\npower cable"]
-        G_CAM["Gland: Camera\npower + video"]
-        G_ANT_RC["Gland: RC Antenna\ncoax"]
-        G_ANT_VTX["Gland: VTX Antenna\ncoax"]
-        G_HYD["Glands x6:\nHydraulic hoses\n(2 per cylinder)"]
+        G_ML["Gland: Left Motor\n(3-phase power cable)"]
+        G_MR["Gland: Right Motor\n(3-phase power cable)"]
+        G_CAM["Gland: Camera\n(power + video cable)"]
+        G_ANT_RC["Gland: RC Antenna\n(antenna cable)"]
+        G_ANT_VTX["Gland: VTX Antenna\n(antenna cable)"]
+        G_HYD["Glands x6: Hydraulic\n(2 hoses per cylinder\n= 6 hoses total)"]
     end
 
-    %% ══════════════════════════════════════════════
-    %% EXTERNAL COMPONENTS
-    %% ══════════════════════════════════════════════
-    subgraph EXTERNAL["🌊 External Components (exposed to environment)"]
+    %% ══════════════════════════════════════════════════════════════════
+    %% ZONE 3: EXTERNAL COMPONENTS
+    %%
+    %% These components are OUTSIDE the sealed box, exposed to water,
+    %% sun, and vegetation. They are either inherently waterproof
+    %% (motors in sealed pods, hydraulic cylinders) or mounted on
+    %% the mast above the waterline (camera, antennas).
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph EXTERNAL["EXTERNAL COMPONENTS (outside the sealed box, on the robot)"]
         direction TB
 
-        subgraph PROPULSION["Propulsion (stern, submerged)"]
-            MOTOR_L["Motor Left\n775 Brushless\n12V / ~150W"]
-            PROP_L["Propeller Left\n3D-printed PETG\n80mm, swept-back"]
-            GUARD_L["Weed Guard Left\nshroud + grid"]
-            MOTOR_R["Motor Right\n775 Brushless\n12V / ~150W"]
-            PROP_R["Propeller Right\n3D-printed PETG\n80mm, swept-back"]
-            GUARD_R["Weed Guard Right\nshroud + grid"]
+        %% ── PROPULSION MOTORS ──
+        %% Two motors, one at the stern of each pontoon.
+        %% Each motor sits in a 3D-printed sealed pod angled
+        %% downward so the propeller is submerged 5-8cm.
+        %% A weed guard (cage with grid bars) surrounds each
+        %% propeller to prevent vegetation from reaching the blades.
+        %% ──────────────────────────────────────────────
+        subgraph PROPULSION["Propulsion Motors (stern of each pontoon, submerged)"]
+            MOTOR_L["Left Motor\n775 Brushless DC\n12V, ~150W\nin sealed pod"]
+            PROP_L["Left Propeller\n3D-printed PETG\n200mm (8in), 3-blade\nswept-back, low pitch"]
+            GUARD_L["Left Weed Guard\n3D-printed PETG shroud\nwith cross-bar grid"]
 
-            MOTOR_L --- PROP_L
-            PROP_L --- GUARD_L
-            MOTOR_R --- PROP_R
-            PROP_R --- GUARD_R
+            MOTOR_L -->|"spins via shaft coupler"| PROP_L
+            PROP_L -->|"enclosed inside"| GUARD_L
         end
 
-        subgraph ARM_ACTUATORS["Hydraulic Arm Cylinders"]
-            CYL1["Cylinder 1\nLift/Lower\n20mm bore, 150-200mm stroke"]
-            CYL2["Cylinder 2\nRotate/Swivel\n20mm bore, 100-150mm stroke"]
-            CYL3["Cylinder 3\nGripper\n20mm bore, 50-100mm stroke"]
+        subgraph PROPULSION_R["  "]
+            MOTOR_R["Right Motor\n775 Brushless DC\n12V, ~150W\nin sealed pod"]
+            PROP_R["Right Propeller\n3D-printed PETG\n200mm (8in), 3-blade\nswept-back, low pitch"]
+            GUARD_R["Right Weed Guard\n3D-printed PETG shroud\nwith cross-bar grid"]
+
+            MOTOR_R -->|"spins via shaft coupler"| PROP_R
+            PROP_R -->|"enclosed inside"| GUARD_R
         end
 
-        subgraph MAST["Antenna & Camera Mast (~50cm PVC)"]
-            ANT_RC["RC Antenna\n2.4GHz\n(mounted high)"]
-            ANT_VTX["VTX Antenna\n5.8GHz Pagoda\n(mounted high)"]
-            CAM["FPV Camera\n1200TVL\n(e.g. RunCam Phoenix 2)\nfront-facing, angled down"]
+        %% ── HYDRAULIC ARM CYLINDERS ──
+        %% These are the three double-acting hydraulic cylinders
+        %% mounted on the robotic arm. They are connected to the
+        %% solenoid valves inside the box via 6mm nylon hoses.
+        %% Each cylinder has 2 hoses: one to extend, one to retract.
+        %% ──────────────────────────────────────────────
+        subgraph ARM_ACTUATORS["Hydraulic Arm Cylinders (on the arm structure)"]
+            CYL1["Cylinder 1: Arm Lift/Lower\n20mm bore, 150-200mm stroke\nmounted at shoulder joint"]
+            CYL2["Cylinder 2: Arm Rotate L/R\n20mm bore, 100-150mm stroke\nmounted at base lever"]
+            CYL3["Cylinder 3: Gripper Open/Close\n20mm bore, 50-100mm stroke\nmounted on claw mechanism"]
+        end
+
+        %% ── MAST COMPONENTS ──
+        %% A ~50cm vertical PVC pipe on the front deck holds the
+        %% camera and both antennas high up for best range.
+        %% The camera faces forward and slightly down to see the
+        %% water surface and the arm in front of the robot.
+        %% ──────────────────────────────────────────────
+        subgraph MAST["Camera and Antenna Mast (~50cm PVC pole on front deck)"]
+            ANT_RC["RC Antenna\n2.4GHz quarter-wave\n(receives operator commands)"]
+            ANT_VTX["VTX Antenna\n5.8GHz Pagoda style\n(broadcasts live video)"]
+            CAM["FPV Camera\n1200TVL mini camera\nfront-facing, angled down\n(sees water + arm)"]
         end
     end
 
-    %% ══════════════════════════════════════════════
-    %% CONNECTIONS THROUGH CABLE GLANDS
-    %% ══════════════════════════════════════════════
+    %% ══════════════════════════════════════════════════════════════════
+    %% WIRING THAT PASSES THROUGH CABLE GLANDS
+    %%
+    %% These connections represent physical cables and hoses that
+    %% start inside the box, pass through a waterproof cable gland
+    %% in the box wall, and end at an external component.
+    %% Thick arrows (==>) = high-current motor wires or hydraulic hoses.
+    %% Thin arrows (-->) = low-current power or signal cables.
+    %% ══════════════════════════════════════════════════════════════════
 
-    %% Motor power
-    ESC_L ==>|"motor phases"| G_ML
-    G_ML ==>|"motor phases"| MOTOR_L
-    ESC_R ==>|"motor phases"| G_MR
-    G_MR ==>|"motor phases"| MOTOR_R
+    %% Motor power: ESCs send 3-phase AC power to spin the motors.
+    %% These are the heaviest-gauge wires exiting the box.
+    ESC_L ==>|"3-phase motor power"| G_ML
+    G_ML ==>|"3-phase motor power"| MOTOR_L
+    ESC_R ==>|"3-phase motor power"| G_MR
+    G_MR ==>|"3-phase motor power"| MOTOR_R
 
-    %% Camera
-    VTX -->|"video signal"| G_CAM
-    BUCK -->|"5V power"| G_CAM
-    G_CAM -->|"power + video"| CAM
+    %% Camera wiring: 5V power goes out to the camera, and the camera
+    %% sends its analog video signal back to the VTX inside the box.
+    %% Both wires share one cable gland.
+    BUCK -->|"5V power out to camera"| G_CAM
+    G_CAM -->|"5V power to camera +\nvideo signal back to VTX"| CAM
+    CAM -->|"analog video signal"| VTX
 
-    %% Antennas
-    RX -->|"coax"| G_ANT_RC
-    G_ANT_RC -->|"coax"| ANT_RC
-    VTX -->|"coax"| G_ANT_VTX
-    G_ANT_VTX -->|"coax"| ANT_VTX
+    %% RC antenna: a cable connects the receiver inside the box
+    %% to the antenna mounted high on the mast outside.
+    %% This allows the receiver to pick up the operator's radio signal.
+    RX -->|"antenna cable"| G_ANT_RC
+    G_ANT_RC -->|"antenna cable"| ANT_RC
 
-    %% Hydraulic hoses
-    V1 ==>|"2x hoses\n(extend/retract)"| G_HYD
-    V2 ==>|"2x hoses\n(extend/retract)"| G_HYD
-    V3 ==>|"2x hoses\n(extend/retract)"| G_HYD
-    G_HYD ==>|"hose pair"| CYL1
-    G_HYD ==>|"hose pair"| CYL2
-    G_HYD ==>|"hose pair"| CYL3
+    %% VTX antenna: a cable connects the video transmitter inside
+    %% the box to the broadcast antenna on the mast outside.
+    VTX -->|"antenna cable"| G_ANT_VTX
+    G_ANT_VTX -->|"antenna cable"| ANT_VTX
 
-    %% ══════════════════════════════════════════════
-    %% OPERATOR SIDE (not on robot)
-    %% ══════════════════════════════════════════════
-    subgraph OPERATOR["👤 Operator (on shore, up to 2km away)"]
-        TX["RC Transmitter\nFlySky FS-i6X\n2.4GHz / 10ch\n(tank-mix steering)"]
-        MONITOR["FPV Monitor 7in\nor EV800D Goggles\n5.8GHz receiver built-in"]
+    %% Hydraulic hoses: each valve sends 2 hoses (extend + retract)
+    %% through cable glands to its corresponding cylinder on the arm.
+    %% 3 valves x 2 hoses = 6 hoses total exiting the box.
+    V1 ==>|"2 hoses: extend + retract"| G_HYD
+    V2 ==>|"2 hoses: extend + retract"| G_HYD
+    V3 ==>|"2 hoses: extend + retract"| G_HYD
+    G_HYD ==>|"hose pair to lift cylinder"| CYL1
+    G_HYD ==>|"hose pair to rotate cylinder"| CYL2
+    G_HYD ==>|"hose pair to gripper cylinder"| CYL3
+
+    %% ══════════════════════════════════════════════════════════════════
+    %% ZONE 4: OPERATOR STATION
+    %%
+    %% The human operator stands on shore, up to 2km away.
+    %% They hold an RC transmitter to send commands, and watch
+    %% a monitor or goggles to see the live video from the robot.
+    %% Two independent wireless links:
+    %%   - 2.4GHz: operator commands --> robot (RC control)
+    %%   - 5.8GHz: robot video --> operator (FPV video)
+    %% ══════════════════════════════════════════════════════════════════
+    subgraph OPERATOR["OPERATOR STATION (human on shore, up to 2km away)"]
+        TX["RC Transmitter\nFlySky FS-i6X\n2.4GHz, 10 channels\ntank-style stick mixing"]
+        MONITOR["FPV Monitor (7 inch screen)\nor FPV Goggles (EV800D)\nhas built-in 5.8GHz receiver"]
     end
 
-    TX -.->|"2.4GHz RF\n~1.5-2km range"| ANT_RC
-    ANT_VTX -.->|"5.8GHz analog video\n~2km+ at 1W"| MONITOR
+    %% Wireless link: operator's transmitter sends 2.4GHz radio
+    %% commands to the RC antenna on the robot
+    TX -.->|"2.4GHz radio commands\n(1.5-2km range)"| ANT_RC
 
-    %% ── APPLY STYLES ──
-    class BAT,SWITCH,FUSE,BUS,BUCK power
-    class BUZZER sensor
-    class RX,RX_CH1,RX_CH2,RX_CH3,RX_CH4,RX_CH5,RX_CH6 signal
-    class ESC_L,ESC_R actuator
-    class MOTOR_L,MOTOR_R,PROP_L,PROP_R,GUARD_L,GUARD_R actuator
-    class PUMP,RESERVOIR,V1,V2,V3 hydraulic
-    class CYL1,CYL2,CYL3 hydraulic
+    %% Wireless link: robot's VTX antenna broadcasts 5.8GHz video
+    %% to the operator's monitor/goggles
+    ANT_VTX -.->|"5.8GHz live video feed\n(2km+ range at 1W)"| MONITOR
+
+    %% ══════════════════════════════════════════════════════════════════
+    %% APPLY COLOR STYLES TO ALL NODES
+    %% ══════════════════════════════════════════════════════════════════
+    class BAT,SWITCH,FUSE,BUS,BUCK,BUZZER power
+    class RX,RX_CH1,RX_CH2,RX_CH3,RX_CH4,RX_CH5 signal
+    class ESC_L,ESC_R,MOTOR_L,MOTOR_R,PROP_L,PROP_R,GUARD_L,GUARD_R actuator
+    class PUMP,RESERVOIR,V1,V2,V3,CYL1,CYL2,CYL3 hydraulic
     class VTX,CAM,ANT_RC,ANT_VTX sensor
     class G_ML,G_MR,G_CAM,G_ANT_RC,G_ANT_VTX,G_HYD gland
     class TX,MONITOR external
