@@ -75,7 +75,7 @@ We use a **twin-pontoon catamaran layout**. This gives us maximum stability (cri
 ### 3.2 Propellers
 
 - **3D-print weed-shedding propellers.** This is a key custom part.
-- Design: 3-blade, ~80 mm diameter, with **swept-back blades and smooth leading edges** (no sharp nooks where weeds can wrap). Thick blade roots.
+- Design: 3-blade, ~200 mm (8") diameter, with **swept-back blades and smooth leading edges** (no sharp nooks where weeds can wrap). Thick blade roots. Lower pitch to avoid motor stall at startup.
 - Material: PETG filament (better water/UV resistance than PLA). Print at 100% infill for strength.
 - Attach to motor shaft via 3D-printed coupler + set screw, or use a standard RC boat prop adapter.
 - **Weed guard:** 3D-print a ring shroud around each propeller — a cylindrical duct with a cross-bar grid at the inlet (~2 cm spacing). This prevents long weeds from reaching the blades. Think of it as a cage around the prop.
@@ -265,7 +265,7 @@ All parts to be printed in **PETG** filament unless noted otherwise. PETG is man
 
 | Part | Qty | Material | Notes |
 |---|---|---|---|
-| Propeller (weed-shedding design) | 2 (+ 2 spares) | PETG, 100% infill | ~80mm dia, swept-back blades |
+| Propeller (weed-shedding design) | 2 (+ 2 spares) | PETG, 100% infill | ~200mm (8") dia, swept-back blades, low pitch |
 | Propeller shroud/weed guard | 2 | PETG, 50% infill | Ring with cross-bar grid |
 | Motor pod housing | 2 | PETG, 60% infill | Angled mount, lip seal groove |
 | Pontoon saddle clamps | 4–6 | PETG, 80% infill | U-shaped, fits drum curvature |
